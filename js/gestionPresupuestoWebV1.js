@@ -106,6 +106,7 @@ function renderizarFormulario() {
     // Contiene los campos necesarios para crear un gasto 
     form.innerHTML = `
         <label for="descripcion">Descripción:</label>
+        
         <input type="text" id="descripcion" name="descripcion" required><br><br>
         
         <label for="valor">Valor (€):</label>

@@ -2,30 +2,180 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestor de Presupuesto Personal</title>
+    <title>Gestor Básico de Gastos</title>
+    <style>
+        /* Estilos generales y variables */
+        :root {
+            --color-primario: #007bff; /* Azul */
+            --color-secundario: #6c757d; /* Gris */
+            --color-fondo: #f8f9fa; 
+            --color-borde: #dee2e6;
+            --color-sombra: rgba(0, 0, 0, 0.05);
+        }
+
+        body { 
+            font-family: 'Arial', sans-serif; 
+            padding: 30px; 
+            background-color: var(--color-fondo);
+            color: #343a40;
+        }
+        h1, h2, h3 { 
+            color: var(--color-primario); 
+            border-bottom: 2px solid var(--color-borde);
+            padding-bottom: 5px;
+            margin-top: 25px;
+        }
+
+        /* Contenedores */
+        #formulario-creacion, #listado-gastos {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px var(--color-sombra);
+            margin-bottom: 30px;
+        }
+
+        /* Formulario de creación */
+        #form-crear-gasto {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        #form-crear-gasto input {
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid var(--color-borde);
+            flex-grow: 1;
+            min-width: 150px;
+        }
+
+        #form-crear-gasto button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            background-color: var(--color-primario);
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #form-crear-gasto button:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
-    <h1>Gestor de Presupuesto Personal</h1>
 
-    <h2>Balance General</h2>
-    <div id="total-gastos">
-        Cargando balance...
+    <h1>Mi Gestor de Gastos Simple</h1>
+    
+    <div id="formulario-creacion">
+        <h3>Añadir Nuevo Gasto</h3>
+        <form id="form-crear-gasto">
+            <input type="text" id="nueva-descripcion" placeholder="Descripción" required>
+            <input type="number" id="nuevo-valor" placeholder="Valor (€)" step="0.01" required>
+            <input type="date" id="nueva-fecha" required>
+            <input type="text" id="nuevas-etiquetas" placeholder="Etiquetas (separadas por coma)">
+            <button type="submit">Crear Gasto</button>
+        </form>
     </div>
 
-    <hr>
-
-    <h2>Crear Nuevo Gasto</h2>
-    <div id="formulario-gasto">
+    <h2>Mis Gastos</h2>
+    <div id="listado-gastos">
         </div>
 
-    <hr>
+    <template id="gasto-template">
+        <style>
+            /* Estilos del componente, aislados por Shadow DOM */
+            .gasto-box { 
+                border: 1px solid #d4edda; 
+                background-color: #f0fff4; 
+                padding: 15px; 
+                margin-bottom: 10px; 
+                border-radius: 6px;
+                display: flex;
+                flex-direction: column;
+            }
+            .datos-gasto { 
+                font-weight: bold; 
+                margin-bottom: 10px; 
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                font-size: 1.1em;
+            }
+            .dato-valor {
+                color: #28a745; /* Verde para el valor */
+                font-size: 1.2em;
+                margin-left: 10px;
+                flex-shrink: 0;
+            }
+            .dato-item {
+                flex-grow: 1;
+                margin-right: 15px;
+                font-weight: normal;
+                color: #333;
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+            }
 
-    <h2>Listado de Gastos</h2>
-    <div id="listado-gastos">
-        Cargando listado...
-    </div>
+            .acciones button {
+                padding: 8px 12px;
+                margin-right: 5px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                transition: opacity 0.2s;
+            }
+            .acciones button:hover {
+                opacity: 0.8;
+            }
+            .editar-btn { background-color: #ffc107; color: #333; }
+            .borrar-btn { background-color: #dc3545; color: white; }
 
-    <script type="module" src="js/gestionPresupuestoWebV1.js"></script>
+            .edicion-form { 
+                display: none; 
+                padding: 15px; 
+                margin-top: 10px; 
+                border-top: 1px dashed #ccc;
+                background-color: #fff;
+                border-radius: 4px;
+                flex-direction: column;
+            }
+            .edicion-form input { 
+                margin-bottom: 8px; 
+                padding: 8px; 
+                border: 1px solid #ccc;
+                border-radius: 4px;
+            }
+        </style>
+
+        <div class="gasto-box">
+            <div class="datos-gasto">
+                <span class="dato-item" id="descripcion-output"></span>
+                <span class="dato-item" id="fecha-output"></span>
+                <span class="dato-item" id="etiquetas-output"></span>
+                <span class="dato-valor" id="valor-output"></span>
+            </div>
+            
+            <div class="acciones">
+                <button class="editar-btn">Editar</button>
+                <button class="borrar-btn">Borrar</button> 
+            </div>
+
+            <form class="edicion-form">
+                <input type="text" class="edit-descripcion" placeholder="Nueva Descripción">
+                <input type="number" class="edit-valor" placeholder="Nuevo Valor">
+                <input type="date" class="edit-fecha" placeholder="Nueva Fecha">
+                <input type="text" class="edit-etiquetas" placeholder="Nuevas Etiquetas (coma)">
+                
+                <div>
+                    <button type="button" class="cancelar-btn">Cancelar</button>
+                    <button type="submit" class="guardar-btn">Enviar</button>
+                </div>
+            </form>
+        </div>
+    </template>
+
+    <script type="module" src="js/gestionPresupuestoWebV2.js"></script> 
 </body>
 </html>
